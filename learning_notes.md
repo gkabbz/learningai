@@ -247,3 +247,76 @@ Query: "Who is Toby?"
 - Processing efficiency: 3-4 chunks per meeting vs 34 chunks at 100 tokens
 
 **Remember:** There's no universal "best" chunk size. Test with your actual content and query patterns.
+
+## Day 3: ChromaDB - Vector Database Fundamentals
+
+**Code:** [understanding_chromadb.py](./understanding_chromadb.py)
+
+### Why Use a Vector Database?
+
+**Problem with Day 2 approach (numpy arrays):**
+- Re-compute embeddings every time script runs
+- Load everything into memory
+- Manual similarity search
+- No persistence between runs
+
+**ChromaDB solves this:**
+- ✅ **Persistence:** Generate embeddings once, store forever
+- ✅ **Auto-embedding:** Handles query embedding automatically
+- ✅ **Optimized search:** Fast similarity search even with thousands of chunks
+- ✅ **Scalable:** Add hundreds of meetings without memory issues
+
+### Key Concepts Learned
+
+**Collections:**
+- Like containers for different data types
+- Example: `meeting_transcripts`, `emails`, `google_docs`
+- Each collection uses the same embedding model for consistency
+
+**ChromaDB's Default Embedding Model:**
+- Uses **all-MiniLM-L6-v2** (same as Day 1 sentence-transformers!)
+- 384 dimensions
+- Downloads automatically on first use
+
+**Distance vs Similarity:**
+- **Similarity (Day 2):** 0.0 to 1.0, higher = better (cosine similarity)
+- **Distance (ChromaDB):** 0.0+, lower = better (inverse concept)
+- Same idea, different metric
+
+### Experimental Results
+
+**4 chunks (1000 tokens each) from West Wing transcript**
+
+Query comparison:
+- "Who is Toby?" → Distance: 1.649 (weak match - just name mention)
+- "What was discussed about the president?" → Distance: 1.348 (BEST - keyword overlap!)
+- "Tell me about military or battleships" → Distance: 1.706
+
+**Key Insight:** Semantic search still benefits from keyword overlap. If "president" appears frequently in a chunk, that chunk scores well for queries containing "president". It's not pure magic - it's enhanced keyword matching with semantic understanding.
+
+### ChromaDB Basic Operations
+
+```python
+import chromadb
+
+# Create client and collection
+client = chromadb.Client()
+collection = client.create_collection(name="meeting_transcripts")
+
+# Add documents (auto-embeds them)
+collection.add(
+    documents=["chunk text 1", "chunk text 2"],
+    ids=["chunk_0", "chunk_1"]
+)
+
+# Query (auto-embeds query)
+results = collection.query(
+    query_texts=["What was discussed?"],
+    n_results=3
+)
+```
+
+**What's happening behind the scenes:**
+1. Documents → Embedded with all-MiniLM-L6-v2 → Stored with 384-dim vectors
+2. Query → Embedded with same model → Compared to all stored vectors
+3. Returns closest matches by distance

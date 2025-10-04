@@ -2,9 +2,9 @@
 
 **Last Updated:** 2025-10-04
 **Current Phase:** Phase 1, Week 1
-**Current Status:** Day 1 ✅ COMPLETED, Day 2 ✅ COMPLETED
-**Next Up:** Day 3 - ChromaDB setup and first vector database
-**Overall Progress:** 2/90 days (2.2%)
+**Current Status:** Day 1 ✅ COMPLETED, Day 2 ✅ COMPLETED, Day 3 ✅ COMPLETED
+**Next Up:** Day 4 - Add metadata to ChromaDB (filtered queries)
+**Overall Progress:** 3/90 days (3.3%)
 **Next Milestone:** Working RAG prototype by Day 7
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
@@ -62,14 +62,17 @@ pip install anthropic numpy scikit-learn
 ```
 
 #### Day 3-4: First Vector Database
-**Day 3:**
-- [ ] Install ChromaDB: `pip install chromadb`
-- [ ] Create a collection
-- [ ] Add 20-30 chunks from 2-3 meeting transcripts
-- [ ] Query with 5 test questions
-- [ ] Return top 3 most relevant chunks
 
-**Day 4:**
+**Day 3:** ✅
+- [x] Install ChromaDB: `pip install chromadb`
+- [x] Create a collection
+- [x] Add chunks from meeting transcript
+- [x] Query with test questions
+- [x] Return top results
+- **File:** `understanding_chromadb.py`
+- **Key Learning:** ChromaDB provides persistence, auto-embedding, and optimized search. Uses all-MiniLM-L6-v2 (384 dimensions) by default. Distance metric (lower = better) vs similarity (higher = better).
+
+**Day 4:** ⏳ PENDING
 - [ ] Add metadata to chunks (date, meeting type, participants)
 - [ ] Implement filtered queries
 - [ ] Test: "What did we discuss about data governance in December?"
