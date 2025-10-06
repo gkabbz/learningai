@@ -22,7 +22,7 @@ Embeddings
 - ✅ Successfully generated embeddings using Claude API
 - ✅ Calculated cosine similarities between sentence pairs
 - ✅ Understood the mathematical foundation
-- ⚠️ Inconsistent results due to using chat model vs dedicated embedding model
+- ⚠️ Inconsistent results due to using chat mode3l vs dedicated embedding model
 
 **4. Key insight from results:**
 - Some semantic clustering worked (woodworking sentences clustered together)
@@ -320,3 +320,133 @@ results = collection.query(
 1. Documents → Embedded with all-MiniLM-L6-v2 → Stored with 384-dim vectors
 2. Query → Embedded with same model → Compared to all stored vectors
 3. Returns closest matches by distance
+
+## Day 4: Metadata Filtering for Contextual Queries
+
+**Code:** [understanding_chromadb.py](./understanding_chromadb.py) (updated)
+
+### What is Metadata?
+
+**Metadata** = Information *about* the document/chunk, known before reading content
+- Examples: date, participants, meeting type, document source
+
+**Content** = What's *inside* the text (discovered by reading/searching)
+- Examples: budget amounts, decisions made, action items
+
+### Why Metadata Matters
+
+**Without metadata:** "What was discussed about the budget?" → searches ALL meetings
+
+**With metadata:** "What was discussed about the budget in October team meetings with Alice?" → filters first, then searches
+
+**This is hybrid search:** Filter by structured data + semantic search by meaning
+
+### Metadata Strategy for "Ask George"
+
+**Chosen metadata fields:**
+- `date`: Filter by time period
+- `meeting_title`: Identify recurring meetings
+- `participants`: Filter by people (MOST VALUABLE - participants proxy for topic/project)
+- `meeting_type`: Distinguish 1-on-1 vs team meetings
+
+**Why participants is most valuable:** Different people = different work areas. Filtering by participants quickly narrows to relevant context.
+
+### ChromaDB Metadata Implementation
+
+```python
+# Add metadata to chunks
+collection.add(
+    documents=["chunk text 1", "chunk text 2"],
+    ids=["chunk_0", "chunk_1"],
+    metadatas=[
+        {"date": "2024-10-01", "meeting_type": "team", "participants": "Alice, Bob"},
+        {"date": "2024-10-01", "meeting_type": "team", "participants": "Alice, Bob"}
+    ]
+)
+
+# Query with metadata filter
+results = collection.query(
+    query_texts=["What was discussed about budget?"],
+    where={"meeting_type": "team"},  # Only search team meetings
+    n_results=3
+)
+```
+
+**Filter logic:**
+1. Filter to chunks matching metadata criteria
+2. Run semantic search within filtered set
+3. Return best matches
+
+**Key insight:** All chunks from the same meeting share the same metadata (metadata describes the meeting, not individual chunks).
+
+## Day 5: End-to-End RAG Pipeline with Claude API
+
+**Code:** [understanding_rag.py](./understanding_rag.py)
+
+### What is RAG (Retrieval Augmented Generation)?
+
+RAG = Connecting retrieval (vector database) with generation (LLM) to answer questions based on your specific knowledge base.
+
+**The RAG Flow:**
+1. User asks question
+2. Retrieve relevant chunks from vector database
+3. Build prompt with context + question
+4. LLM generates answer based ONLY on provided context
+
+### RAG vs Non-RAG Comparison
+
+**Question:** "Who is Toby?"
+
+**Without RAG (Claude alone):**
+- Asked for clarification
+- Suggested multiple possibilities: Toby from The Office, Pretty Little Liars, etc.
+- No access to your specific data
+
+**With RAG (Claude + retrieved context):**
+- "Toby Ziegler is introduced to Carl Everett, works with Sam and Josh..."
+- Answer grounded in YOUR transcript
+- No hallucination - stuck to provided context
+
+### Key RAG Concepts Learned
+
+**1. Context Window Management:**
+- Retrieved 2 chunks = 8,011 characters of context
+- Sent as part of prompt to Claude
+- Context + question + instructions all fit in Claude's context window
+
+**2. Prompt Engineering for RAG:**
+```
+You are a helpful assistant that answers questions based on provided context.
+
+Context from meeting transcripts:
+[Retrieved chunks here]
+
+Question: [User's question]
+
+Please answer based ONLY on the information in the context above.
+If the context doesn't contain enough information, say so.
+```
+
+**3. Conversation History (Multi-turn):**
+- Each API call is stateless
+- To maintain conversation, include previous messages:
+  ```python
+  messages=[
+      {"role": "user", "content": "First question with context"},
+      {"role": "assistant", "content": "First answer"},
+      {"role": "user", "content": "Follow-up question"}
+  ]
+  ```
+
+### Critical Insight: Grounding Prevents Hallucination
+
+**The power of RAG:** Forces LLM to answer from YOUR data only
+- Without context: Claude guesses or asks for clarification
+- With context: Claude answers from provided information or admits "I don't know"
+- No making things up based on training data
+
+**This is why RAG is essential for:**
+- Personal knowledge bases (meetings, docs, emails)
+- Company-specific information
+- Private data that wasn't in LLM training
+- Any domain requiring factual accuracy from specific sources

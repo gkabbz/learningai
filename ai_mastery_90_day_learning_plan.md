@@ -2,9 +2,9 @@
 
 **Last Updated:** 2025-10-04
 **Current Phase:** Phase 1, Week 1
-**Current Status:** Day 1 ✅ COMPLETED, Day 2 ✅ COMPLETED, Day 3 ✅ COMPLETED
-**Next Up:** Day 4 - Add metadata to ChromaDB (filtered queries)
-**Overall Progress:** 3/90 days (3.3%)
+**Current Status:** Day 1-5 ✅ COMPLETED
+**Next Up:** Day 6 - Improve prompts, add citations, error handling
+**Overall Progress:** 5/90 days (5.6%)
 **Next Milestone:** Working RAG prototype by Day 7
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
@@ -72,18 +72,24 @@ pip install anthropic numpy scikit-learn
 - **File:** `understanding_chromadb.py`
 - **Key Learning:** ChromaDB provides persistence, auto-embedding, and optimized search. Uses all-MiniLM-L6-v2 (384 dimensions) by default. Distance metric (lower = better) vs similarity (higher = better).
 
-**Day 4:** ⏳ PENDING
-- [ ] Add metadata to chunks (date, meeting type, participants)
-- [ ] Implement filtered queries
-- [ ] Test: "What did we discuss about data governance in December?"
-- [ ] Document metadata strategy
+**Day 4:** ✅
+- [x] Add metadata to chunks (date, meeting type, participants)
+- [x] Implement filtered queries
+- [x] Test filtered queries with `where` parameter
+- [x] Document metadata strategy
+- **File:** `understanding_chromadb.py` (updated)
+- **Key Learning:** Hybrid search = filter by structured metadata + semantic search. Participants most valuable (proxy for topic/project context).
 
 #### Day 5-7: End-to-End RAG Pipeline
-**Day 5:**
-- [ ] Set up Claude API key (console.anthropic.com)
-- [ ] Build basic RAG flow:
-  - User question → Embed question → Search vector DB → Pass to Claude → Get answer
-- [ ] Test with 3 questions
+
+**Day 5:** ✅
+- [x] Set up Claude API integration
+- [x] Build basic RAG flow:
+  - User question → Retrieve chunks → Build context → Claude generates answer
+- [x] Test RAG vs non-RAG answers
+- [x] Implement multi-turn conversation with history
+- **File:** `understanding_rag.py`
+- **Key Learning:** RAG grounds LLM answers in YOUR data, preventing hallucination. Retrieved 2 chunks (8,011 chars) and Claude answered from context only.
 
 **Day 6:**
 - [ ] Improve system prompts to encourage citations

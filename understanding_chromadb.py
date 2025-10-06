@@ -51,17 +51,29 @@ collection = client.create_collection(name="meeting_transcripts")
 print(f"✅ Collection created: {collection.name}")
 print(f"   Items in collection: {collection.count()}")
 
-# Step 4: Add chunks to the collection
-print("\n💾 Adding chunks to ChromaDB...")
+# Step 4: Add chunks to the collection with metadata
+print("\n💾 Adding chunks to ChromaDB with metadata...")
 
 # Prepare the data
 documents = [chunk['text'] for chunk in chunks]
 ids = [f"chunk_{i}" for i in range(len(chunks))]
 
-# Add to collection (ChromaDB will auto-generate embeddings!)
+# Create metadata for this meeting (same for all chunks from this meeting)
+meeting_metadata = {
+    "date": "2024-10-01",
+    "meeting_title": "West Wing Strategy Session",
+    "participants": "Toby, Sam, Josh",
+    "meeting_type": "team"
+}
+
+# Each chunk gets a copy of the meeting metadata
+metadatas = [meeting_metadata.copy() for _ in range(len(chunks))]
+
+# Add to collection with metadata (ChromaDB will auto-generate embeddings!)
 collection.add(
     documents=documents,
-    ids=ids
+    ids=ids,
+    metadatas=metadatas
 )
 
 print(f"✅ Added {len(documents)} chunks to collection")
@@ -90,4 +102,23 @@ for query in test_queries:
         print(f"\nResult {i+1}:")
         print(f"  ID: {results['ids'][0][i]}")
         print(f"  Distance: {results['distances'][0][i]:.3f}")
-        print(f"  Text: {results['documents'][0][i][:250]}...")
+        print(f"  Metadata: {results['metadatas'][0][i]}")
+        print(f"  Text: {results['documents'][0][i][:200]}...")
+
+# Step 6: Test filtered query with metadata
+print("\n" + "="*80)
+print("TESTING METADATA FILTERING")
+print("="*80)
+
+print("\nQuery with filter: 'What was discussed?' WHERE meeting_type='team'")
+filtered_results = collection.query(
+    query_texts=["What was discussed about the president?"],
+    where={"meeting_type": "team"},
+    n_results=2
+)
+
+print(f"\nFound {len(filtered_results['ids'][0])} results:")
+for i in range(len(filtered_results['ids'][0])):
+    print(f"\nResult {i+1}:")
+    print(f"  Metadata: {filtered_results['metadatas'][0][i]}")
+    print(f"  Distance: {filtered_results['distances'][0][i]:.3f}")
