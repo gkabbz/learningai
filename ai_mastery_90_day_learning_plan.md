@@ -1,11 +1,11 @@
 # 90-Day AI Mastery Learning Plan
 
-**Last Updated:** 2025-10-04
+**Last Updated:** 2025-10-07
 **Current Phase:** Phase 1, Week 1
-**Current Status:** Day 1-5 ✅ COMPLETED
-**Next Up:** Day 6 - Improve prompts, add citations, error handling
-**Overall Progress:** 5/90 days (5.6%)
-**Next Milestone:** Working RAG prototype by Day 7
+**Current Status:** Day 1-6 ✅ COMPLETED
+**Next Up:** Day 7 - Week 1 retrospective and CLI interface
+**Overall Progress:** 6/90 days (6.7%)
+**Next Milestone:** Working RAG prototype by Day 7 (almost there!)
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
 
@@ -91,11 +91,13 @@ pip install anthropic numpy scikit-learn
 - **File:** `understanding_rag.py`
 - **Key Learning:** RAG grounds LLM answers in YOUR data, preventing hallucination. Retrieved 2 chunks (8,011 chars) and Claude answered from context only.
 
-**Day 6:**
-- [ ] Improve system prompts to encourage citations
-- [ ] Experiment with different prompt strategies
-- [ ] Test with 10 different questions
-- [ ] Document what works vs doesn't
+**Day 6:** ✅
+- [x] Add citations to RAG responses (include metadata in context)
+- [x] Improve prompts to request source attribution
+- [x] Test with 4 different question types
+- [x] Document what works vs doesn't
+- **File:** `understanding_rag.py` (updated with citations)
+- **Key Learning:** RAG excels at factual questions (who/what/when) but struggles with judgment questions requiring external criteria. Citations enable verification and follow-ups.
 
 **Day 7:**
 - [ ] Add error handling to pipeline

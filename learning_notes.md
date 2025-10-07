@@ -450,3 +450,78 @@ If the context doesn't contain enough information, say so.
 - Company-specific information
 - Private data that wasn't in LLM training
 - Any domain requiring factual accuracy from specific sources
+
+## Day 6: Improving RAG with Citations and Testing
+
+**Code:** [understanding_rag.py](./understanding_rag.py) (updated)
+
+### Adding Citations to RAG
+
+**Why citations matter:**
+1. **Verify accuracy** - Check if Claude's interpretation matches source
+2. **Enable follow-ups** - Know which meeting to dig deeper into
+3. **Build trust** - Users can see where answers come from
+
+**Implementation approach:**
+- Include metadata in context alongside chunk text
+- Add prompt instruction: "Cite which source(s) you used"
+- Format: `Source {i+1} (Meeting Title, Date): [chunk text]`
+
+**Example citation prompt:**
+```
+Source 1:
+- Meeting: West Wing Strategy Session
+- Date: 2024-10-01
+- Participants: Toby, Sam, Josh
+- Content: [chunk text]
+
+Question: Who is Toby?
+
+Please answer based ONLY on the information in the sources above.
+At the end of your answer, cite which source(s) you used.
+```
+
+**Result:** Claude now answers + adds "**Source: West Wing Strategy Session, 2024-10-01**"
+
+### Testing Different Question Types
+
+**Test questions:**
+1. "Who was flirting with who?" (relationship detection)
+2. "What was the impasse with the labour union?" (specific facts)
+3. "Was the hurricane response effective?" (requires judgment)
+4. "Who won the monday night football game?" (not in transcript)
+
+### What Works Well vs What Doesn't
+
+**✅ Works Well: Direct Factual Questions**
+- "Who was flirting?" → Found Danny & C.J., cited dialogue as evidence
+- Questions about who, what, when, where
+- Information directly stated in text
+- Can be answered without external knowledge
+
+**⚠️ Limited: Judgment/Opinion Questions**
+- "Was the hurricane response effective?" → Honestly said "cannot determine"
+- Listed what WAS mentioned (FEMA call, communication issues)
+- But couldn't evaluate effectiveness without external criteria
+- Requires evaluation framework not in the context
+
+**✅ Works Well: Honest "I Don't Know"**
+- "Monday Night Football winner?" → Clear "cannot answer based on sources"
+- No hallucination when info isn't available
+- RAG successfully prevents making things up
+
+### Key Insights
+
+**RAG's Strengths:**
+- Retrieval of factual information from your data
+- Citing sources for verification
+- Honest admission when information is missing
+- No hallucination on out-of-scope questions
+
+**RAG's Limitations:**
+- Can't apply external knowledge or judgment
+- Can't evaluate "effectiveness" without criteria
+- Limited to what's explicitly in the retrieved context
+- Requires factual content, not just tangentially related text
+
+**The fundamental trade-off:** RAG grounds answers in your data (good for accuracy) but sacrifices the LLM's broader reasoning capabilities (limits judgment questions).
