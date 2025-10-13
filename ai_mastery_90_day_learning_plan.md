@@ -2,9 +2,9 @@
 
 **Last Updated:** 2025-10-09
 **Current Phase:** Phase 1, Week 2
-**Current Status:** Day 8 ✅ COMPLETED
-**Next Up:** Day 9 - Firestore Vector Search basics
-**Overall Progress:** 8/90 days (8.9%)
+**Current Status:** Day 9 ✅ COMPLETED
+**Next Up:** Day 10 - Migrate chunking + embeddings pipeline
+**Overall Progress:** 9/90 days (10.0%)
 **Next Milestone:** Firestore-based RAG with multiple transcripts by Day 14
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
@@ -128,12 +128,14 @@ pip install anthropic numpy scikit-learn
 - **Key Learning:** NoSQL = flexible schema, denormalization acceptable, hierarchical data model perfect for meetings → chunks
 - **File:** `understanding_firestore.py`
 
-**Day 9: Firestore Vector Search Basics**
-- [ ] Understand how vector search works in Firestore
-- [ ] Learn about vector indexes and distance metrics
-- [ ] Create first vector field + index
-- [ ] Test: Store embeddings and do similarity search
-- **Key Learning:** Firestore vector search capabilities, index requirements, query patterns
+**Day 9: Firestore Vector Search Basics** ✅
+- [x] Learned to store embeddings as `Vector` type (not arrays)
+- [x] Created vector index via gcloud CLI (384 dimensions, flat index)
+- [x] Implemented similarity search with `find_nearest()`
+- [x] Tested: Query "Who talked about battleships?" → Found matching chunks
+- [x] Understood index trade-offs: Slower inserts, faster searches
+- **Key Learning:** Vector type required for search, indexes created via CLI, manual embedding generation (vs ChromaDB auto)
+- **File:** `understanding_firestore_vectors.py`
 
 **Day 10: Migrate Chunking + Embeddings Pipeline**
 - [ ] Port chunking logic from understanding_chunking.py to work with Firestore

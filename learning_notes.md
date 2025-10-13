@@ -701,3 +701,162 @@ chunk = chunk_ref.get()
 | **Metadata** | Separate parameter | Just regular fields |
 | **Schema** | Fixed at collection creation | Flexible per document |
 | **Access** | Local Python only | Accessible from anywhere |
+
+## Day 9: Firestore Vector Search (2025-10-09)
+
+**Code:** [understanding_firestore_vectors.py](./understanding_firestore_vectors.py)
+
+### Adding Vector Search to Firestore
+
+Vector search enables similarity search in Firestore - finding documents with embeddings similar to a query embedding.
+
+**Complete workflow:**
+1. Generate embeddings with sentence-transformers
+2. Store embeddings as `Vector` type in Firestore
+3. Create vector index via gcloud CLI
+4. Query with `find_nearest()` for similarity search
+
+### Storing Embeddings in Firestore
+
+Embeddings must be stored as `Vector` type (not regular arrays):
+
+```python
+from google.cloud.firestore_v1.vector import Vector
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# Generate embedding
+text = "Toby discusses the battleship with Sam and Josh."
+embedding = model.encode(text)
+
+# Store with Vector type
+chunk_ref = db.collection('meetings').document('meeting_001').collection('chunks').document('chunk_001')
+chunk_ref.set({
+    'text': text,
+    'chunk_index': 0,
+    'embedding': Vector(embedding.tolist())  # Vector type, not plain list
+})
+```
+
+**Why Vector type?**
+- Tells Firestore this field is for similarity search
+- Enables storage optimization for vector operations
+- Required for vector indexes to work
+
+### Creating Vector Indexes
+
+**Mental model:** Think of a vector index as a **map** in 384-dimensional space. Once embeddings are generated, they're positioned on this map. When you search with a query, the query is also positioned on the map, and the index helps quickly find what's closest in meaning.
+
+**Without an index:** Compare query to every single document (slow)
+**With an index:** Use the map to quickly navigate to nearest neighbors (fast)
+
+Vector indexes are created via gcloud CLI (not the console):
+
+```bash
+gcloud firestore indexes composite create \
+  --collection-group=chunks \
+  --query-scope=COLLECTION_GROUP \
+  --field-config field-path=embedding,vector-config='{"dimension":"384", "flat": "{}"}' \
+  --database='(default)'
+```
+
+**Index configuration:**
+- `--collection-group=chunks`: Index all `chunks` subcollections across all meetings
+- `--query-scope=COLLECTION_GROUP`: Search across all meetings
+- `dimension`: 384 (matches all-MiniLM-L6-v2 output)
+- `flat`: Index type (only option currently)
+
+**Check index status:**
+```bash
+gcloud firestore indexes composite list
+```
+Look for `STATE: READY`
+
+### Similarity Search
+
+```python
+from google.cloud.firestore_v1.base_vector_query import DistanceMeasure
+from google.cloud.firestore_v1.vector import Vector
+
+# Generate query embedding
+query_text = "Who talked about battleships?"
+query_embedding = model.encode(query_text)
+
+# Search across all chunks subcollections
+chunks_collection = db.collection_group('chunks')
+vector_query = chunks_collection.find_nearest(
+    vector_field='embedding',
+    query_vector=Vector(query_embedding.tolist()),
+    distance_measure=DistanceMeasure.EUCLIDEAN,
+    limit=3
+)
+
+# Get results
+results = vector_query.stream()
+for doc in results:
+    data = doc.to_dict()
+    print(f"Text: {data['text']}")
+    print(f"Path: {doc.reference.path}")
+```
+
+**Distance measures:**
+- `EUCLIDEAN`: Standard distance between vectors
+- `COSINE`: Compares angle between vectors (0 to 2)
+- `DOT_PRODUCT`: Considers both angle and magnitude
+
+### Index Performance Trade-offs
+
+Vector indexes make searches faster but inserts slower:
+
+| Operation | Without Index | With Index |
+|-----------|---------------|------------|
+| **Insert** | Fast (~1ms) | Slower (~10ms) |
+| **Search** | Slow (~1000ms for 1000 docs) | Fast (~10ms) |
+
+**For RAG systems:**
+- Insert meetings: Occasionally (daily)
+- Query: Constantly (every question)
+- Trade-off is worth it: Slightly slower inserts for much faster queries
+
+### Firestore vs ChromaDB
+
+| Aspect | ChromaDB | Firestore |
+|--------|----------|-----------|
+| **Embedding generation** | Auto-generated | Manual (you generate) |
+| **Storage** | Automatic | Use `Vector` type |
+| **Index creation** | Automatic | Manual (gcloud CLI) |
+| **Query embedding** | Auto-generated | Manual (you generate) |
+| **Persistence** | Optional | Always (cloud) |
+| **Complexity** | Low | Higher (GCP setup) |
+
+**ChromaDB (simpler):**
+```python
+collection.add(documents=["text"], ids=["id"])
+results = collection.query(query_texts=["query"], n_results=3)
+```
+
+**Firestore (more control):**
+```python
+# Store
+embedding = model.encode("text")
+ref.set({'text': 'text', 'embedding': Vector(embedding.tolist())})
+
+# Query
+query_emb = model.encode("query")
+results = db.collection_group('chunks').find_nearest(
+    vector_field='embedding',
+    query_vector=Vector(query_emb.tolist()),
+    limit=3
+).stream()
+```
+
+**Trade-off:** Firestore requires more manual work but provides production-ready, persistent, cloud storage.
+
+### Key Requirements
+
+For vector search to work:
+1. Embeddings stored as `Vector` type (not arrays)
+2. Vector index created with matching dimensions
+3. Query vector same dimensions as stored vectors
+4. All documents in indexed collection must have the vector field
