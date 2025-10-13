@@ -1,11 +1,11 @@
 # 90-Day AI Mastery Learning Plan
 
-**Last Updated:** 2025-10-07
-**Current Phase:** Phase 1, Week 1
-**Current Status:** Day 1-6 ✅ COMPLETED
-**Next Up:** Day 7 - Week 1 retrospective and CLI interface
-**Overall Progress:** 6/90 days (6.7%)
-**Next Milestone:** Working RAG prototype by Day 7 (almost there!)
+**Last Updated:** 2025-10-09
+**Current Phase:** Phase 1, Week 2
+**Current Status:** Day 8 ✅ COMPLETED
+**Next Up:** Day 9 - Firestore Vector Search basics
+**Overall Progress:** 8/90 days (8.9%)
+**Next Milestone:** Firestore-based RAG with multiple transcripts by Day 14
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
 
@@ -99,69 +99,87 @@ pip install anthropic numpy scikit-learn
 - **File:** `understanding_rag.py` (updated with citations)
 - **Key Learning:** RAG excels at factual questions (who/what/when) but struggles with judgment questions requiring external criteria. Citations enable verification and follow-ups.
 
-**Day 7:**
-- [ ] Add error handling to pipeline
-- [ ] Create simple CLI interface
-- [ ] Test with someone else asking questions
-- [ ] Write Week 1 retrospective
+**Day 7:** ✅
+- [x] Week 1 retrospective completed
+- [x] Identified key takeaways: embeddings → vectors → comparison, tokens, model specialization
+- [x] Decided on Week 2 direction: Migrate to Firestore Vector Search for production patterns
+- [x] Planned Week 2 day-by-day (Firestore fundamentals → vector search → RAG migration)
 
 **Week 1 Success Criteria:**
-- [ ] Working Python script answering questions about meetings
-- [ ] Vector database with real meeting data
-- [ ] 5-10 test questions returning decent answers
-- [ ] Documentation of learnings and improvements needed
+- [x] Working Python script answering questions about meetings
+- [x] Vector database with real meeting data
+- [x] 5-10 test questions returning decent answers (tested 4 different question types)
+- [x] Documentation of learnings and improvements needed
 
 ---
 
-### Week 2: Data Ingestion (Days 8-14)
+### Week 2: Data Ingestion → REVISED: Firestore Migration (Days 8-14)
 
-#### Day 8-10: Granola Transcript Processing
-**Day 8:**
-- [ ] Export all Granola transcripts to structured format
-- [ ] Design chunking strategy for meeting transcripts
-- [ ] Consider: speaker changes, topic shifts, time segments
+**REVISION NOTE (2025-10-09):** Changed from ChromaDB to Firestore Vector Search for production-ready infrastructure. Google Docs integration deferred to Week 3. Core goals (multiple transcripts, ingestion pipeline, persistent storage, metadata) remain the same.
 
-**Day 9:**
-- [ ] Write script to process all Granola exports
-- [ ] Add metadata: date, participants, meeting type, duration
-- [ ] Load into vector database
+#### Day 8-10: Firestore Setup & Migration
 
-**Day 10:**
-- [ ] Test retrieval quality with 20 questions
-- [ ] Identify and fix poor retrieval cases
-- [ ] Refine chunking strategy based on results
+**Day 8: Firestore Fundamentals** ✅
+- [x] Understood NoSQL fundamentals: "Not Only SQL" - flexible, hierarchical, denormalized
+- [x] Learned Firestore data model: collections → documents → subcollections → documents
+- [x] Chose subcollections over flat structure (delete meeting = delete chunks automatically)
+- [x] Created understanding_firestore.py with basic CRUD operations
+- [x] Tested: Created meeting document, read it back, added chunk as subcollection
+- **Key Learning:** NoSQL = flexible schema, denormalization acceptable, hierarchical data model perfect for meetings → chunks
+- **File:** `understanding_firestore.py`
 
-#### Day 11-12: Google Docs Integration
-**Day 11:**
-- [ ] Set up Google Drive API access
-- [ ] Write script to list and export relevant Google Docs
-- [ ] Test with 5 documents
+**Day 9: Firestore Vector Search Basics**
+- [ ] Understand how vector search works in Firestore
+- [ ] Learn about vector indexes and distance metrics
+- [ ] Create first vector field + index
+- [ ] Test: Store embeddings and do similarity search
+- **Key Learning:** Firestore vector search capabilities, index requirements, query patterns
 
-**Day 12:**
-- [ ] Process Google Docs with appropriate chunking
-- [ ] Add metadata: doc title, last modified, owner
-- [ ] Integrate into vector database
-- [ ] Test cross-source retrieval (meetings + docs)
+**Day 10: Migrate Chunking + Embeddings Pipeline**
+- [ ] Port chunking logic from understanding_chunking.py to work with Firestore
+- [ ] Design schema: meetings/{id}/chunks/{chunk_id} with embeddings
+- [ ] Store chunks as subcollections under meetings
+- [ ] Test: Chunk one transcript → store in Firestore with vectors
+- **Key Learning:** Translating local RAG patterns to cloud-based storage
 
-#### Day 13-14: Chunking Refinement
-**Day 13:**
-- [ ] Review all retrieval failures from testing
-- [ ] Experiment with different chunking approaches:
-  - Fixed size vs semantic breaks
-  - Overlap strategies
-  - Header/title preservation
+#### Day 11-12: RAG Pipeline & Ingestion
 
-**Day 14:**
-- [ ] Implement best chunking strategy across all sources
-- [ ] Rebuild vector database with refined chunks
-- [ ] Run comprehensive test suite
+**Day 11: RAG Query Pipeline with Firestore**
+- [ ] Query Firestore for similar chunks (vector search)
+- [ ] Build context from retrieved chunks (like understanding_rag.py)
+- [ ] Send to Claude for generation
+- [ ] Test: End-to-end RAG with Firestore backend
+- **Key Learning:** Cloud-based RAG query patterns, latency considerations
+
+**Day 12: Ingestion Pipeline + Duplicate Detection**
+- [ ] Check if meeting already exists before processing
+- [ ] Handle incremental ingestion (new meetings only)
+- [ ] Add metadata for filtering (date, participants, meeting_type)
+- [ ] Test: Process multiple transcripts, verify no duplicates
+- **Key Learning:** Production ingestion patterns, idempotency, metadata strategy
+
+#### Day 13-14: Multiple Transcripts + Testing
+
+**Day 13: Batch Processing**
+- [ ] Export multiple Granola transcripts
+- [ ] Process all available transcripts through ingestion pipeline
+- [ ] Verify all meetings stored correctly in Firestore
+- [ ] Test queries across multiple meetings
+
+**Day 14: Testing & Week 2 Retrospective**
+- [ ] Test retrieval quality with 20+ questions across meetings
+- [ ] Validate metadata filtering works (date, participants, meeting_type)
+- [ ] Compare Firestore results vs Week 1 ChromaDB results
 - [ ] Write Week 2 retrospective
+- [ ] Document production patterns learned
 
 **Week 2 Success Criteria:**
-- [ ] All Granola transcripts ingested and queryable
-- [ ] Google Docs integrated
-- [ ] Refined chunking strategy documented
-- [ ] 80%+ retrieval accuracy on test questions
+- [ ] Firestore Vector Search configured and working
+- [ ] All Granola transcripts ingested and queryable from cloud
+- [ ] Ingestion pipeline handles duplicates and incremental updates
+- [ ] Metadata filtering operational
+- [ ] RAG queries work end-to-end with Firestore backend
+- [ ] 80%+ retrieval accuracy maintained (vs Week 1 ChromaDB baseline)
 
 ---
 

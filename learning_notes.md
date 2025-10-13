@@ -525,3 +525,179 @@ At the end of your answer, cite which source(s) you used.
 - Requires factual content, not just tangentially related text
 
 **The fundamental trade-off:** RAG grounds answers in your data (good for accuracy) but sacrifices the LLM's broader reasoning capabilities (limits judgment questions).
+
+## Day 8: Firestore Fundamentals (2025-10-09)
+
+**Code:** [understanding_firestore.py](./understanding_firestore.py)
+
+### What is NoSQL?
+
+**NoSQL = "Not Only SQL"** - an umbrella term for databases that don't use traditional table/row/column structure.
+
+**Key difference from SQL:**
+- SQL: Structure data upfront into rigid tables with defined relationships
+- NoSQL: Store data in flexible formats optimized for how you'll actually use it
+
+**Why NoSQL exists:**
+- Flexible/evolving data structures
+- Massive scale (millions of documents)
+- Fast reads/writes
+- Data that's naturally hierarchical or document-like
+
+### SQL vs NoSQL Trade-offs
+
+| Aspect | SQL | NoSQL |
+|--------|-----|-------|
+| **Simple writes** | Multiple tables/JOINs | Single document update ✅ |
+| **Simple reads** | JOINs across tables | One document read ✅ |
+| **Complex queries** | Powerful (GROUP BY, aggregates) ✅ | Limited |
+| **Data consistency** | Strong guarantees ✅ | Eventual consistency |
+| **Schema changes** | Migrations required | Flexible ✅ |
+| **Scaling** | Vertical (bigger server) | Horizontal (more servers) ✅ |
+
+### Firestore Document Model
+
+**Firestore is a document store** - you store JSON-like documents organized in collections.
+
+**Key concepts:**
+- **Collections** = folders of documents (like `meetings`, `users`)
+- **Documents** = JSON-like objects with fields (like a Python dict)
+- **Subcollections** = collections nested within documents (parent-child relationships)
+
+**The alternating pattern:**
+```
+collection → document → collection → document → ...
+```
+
+Example:
+```
+meetings/meeting_001 → {title: "...", date: "...", participants: [...]}
+  └─ chunks/chunk_001 → {text: "...", chunk_index: 0}
+  └─ chunks/chunk_002 → {text: "...", chunk_index: 1}
+```
+
+### Why Subcollections?
+
+**Flat structure (like SQL foreign keys):**
+```
+meetings/{meeting_id} → {title, date, participants}
+chunks/{chunk_id} → {meeting_id, text, embedding}
+```
+- Chunks exist independently
+- Deleting meeting leaves orphaned chunks
+- Need to filter by meeting_id when querying
+
+**Subcollections (hierarchical):**
+```
+meetings/{meeting_id} → {title, date, participants}
+  └─ chunks/{chunk_id} → {text, embedding}
+```
+- Chunks belong to meeting
+- Deleting meeting automatically deletes all chunks
+- Clear parent-child relationship
+- Path includes context: `meetings/meeting_001/chunks/chunk_001`
+
+**Decision rule:** If data has a parent-child relationship (chunks can't exist without meetings), use subcollections.
+
+### NoSQL Philosophy: Denormalization
+
+**SQL approach (normalized):**
+```
+users table: id=1, name="Alice"
+meeting_participants: meeting_id=5, user_id=1
+
+Alice changes name → Update ONE row
+```
+
+**NoSQL approach (denormalized):**
+```
+meetings/meeting_5: {participants: ["Alice", "Bob"]}
+
+Alice changes name → Update EVERY meeting document
+```
+
+**Trade-off:** Duplication is okay if it makes reads faster.
+
+**Why?**
+- Reads happen 100x more than writes
+- Storage is cheap
+- Network round-trips are expensive
+- Participant names rarely change
+
+For RAG: Query meetings constantly (every RAG query), rarely update participant names → duplication acceptable.
+
+### Schema Flexibility
+
+**SQL:** Adding a field requires ALTER TABLE, migration scripts, downtime
+
+**NoSQL:** Just add the field to new documents
+- One meeting: `participants: ["Alice", "Bob"]` (2 people)
+- Another meeting: `participants: ["Alice", "Bob", "Carol", "David", "Eve"]` (5 people)
+- No schema change needed
+
+Arrays can be any size, fields can be added/removed freely.
+
+### Firestore Basic Operations
+
+```python
+from google.cloud import firestore
+
+# Connect
+db = firestore.Client(project='your-project-id')
+
+# Create/overwrite document
+db.collection('meetings').document('meeting_001').set({
+    'title': 'Strategy Session',
+    'participants': ['Alice', 'Bob']
+})
+
+# Read document
+doc_ref = db.collection('meetings').document('meeting_001')
+doc = doc_ref.get()
+if doc.exists:
+    data = doc.to_dict()  # Convert to Python dict
+
+# Create subcollection
+db.collection('meetings').document('meeting_001').collection('chunks').document('chunk_001').set({
+    'text': 'Meeting notes...',
+    'chunk_index': 0
+})
+
+# Read from subcollection
+chunk_ref = db.collection('meetings').document('meeting_001').collection('chunks').document('chunk_001')
+chunk = chunk_ref.get()
+```
+
+### Key Insights from Day 8
+
+**1. Permanent cloud storage**
+- ChromaDB: In-memory, recreated each run
+- Firestore: Cloud-persistent, survives restarts, accessible from anywhere
+
+**2. Metadata = just fields**
+- ChromaDB: Separate metadata parameter, filter with `where={}`
+- Firestore: All fields treated equally - participants, date, text all just fields
+
+**3. Hierarchical data model**
+- Natural fit for meetings → chunks relationship
+- Delete meeting = delete all chunks automatically
+- Path structure shows relationships: `meetings/meeting_001/chunks/chunk_001`
+
+**4. "NoSQL" = "Not Only SQL"**
+- Not anti-SQL, just a different tool for different jobs
+- SQL for transactions/consistency, NoSQL for flexibility/scale
+
+**5. Practical nesting depth**
+- CAN nest infinitely: `collection/doc/collection/doc/collection/doc...`
+- SHOULD limit to 2-3 levels for performance
+- For RAG: `meetings/{id}/chunks/{id}` is perfect
+
+### What's Different from ChromaDB?
+
+| Aspect | ChromaDB (Week 1) | Firestore (Day 8) |
+|--------|-------------------|-------------------|
+| **Storage** | In-memory/local file | Cloud-persistent |
+| **Data model** | Flat collections | Hierarchical (subcollections) |
+| **Metadata** | Separate parameter | Just regular fields |
+| **Schema** | Fixed at collection creation | Flexible per document |
+| **Access** | Local Python only | Accessible from anywhere |
