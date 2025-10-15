@@ -1,11 +1,11 @@
 # 90-Day AI Mastery Learning Plan
 
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-10-13
 **Current Phase:** Phase 1, Week 2
-**Current Status:** Day 9 ✅ COMPLETED
-**Next Up:** Day 10 - Migrate chunking + embeddings pipeline
-**Overall Progress:** 9/90 days (10.0%)
-**Next Milestone:** Firestore-based RAG with multiple transcripts by Day 14
+**Current Status:** Day 10 ✅ COMPLETED
+**Next Up:** Day 11 - RAG query pipeline with Claude
+**Overall Progress:** 10/90 days (11.1%)
+**Next Milestone:** Firestore-based RAG with multiple PRs by Day 14
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
 
@@ -137,12 +137,14 @@ pip install anthropic numpy scikit-learn
 - **Key Learning:** Vector type required for search, indexes created via CLI, manual embedding generation (vs ChromaDB auto)
 - **File:** `understanding_firestore_vectors.py`
 
-**Day 10: Migrate Chunking + Embeddings Pipeline**
-- [ ] Port chunking logic from understanding_chunking.py to work with Firestore
-- [ ] Design schema: meetings/{id}/chunks/{chunk_id} with embeddings
-- [ ] Store chunks as subcollections under meetings
-- [ ] Test: Chunk one transcript → store in Firestore with vectors
-- **Key Learning:** Translating local RAG patterns to cloud-based storage
+**Day 10: Migrate Chunking + Embeddings Pipeline** ✅ COMPLETED
+- [x] Pivoted to GitHub PR data instead of meeting transcripts (more practical)
+- [x] Built PR chunking functions: overview, files, reviews
+- [x] Generated embeddings with sentence-transformers (all-MiniLM-L6-v2)
+- [x] Stored PR #7974 with 5 chunks in Firestore (prs/{pr_number}/chunks/{chunk_id})
+- [x] Created vector index via gcloud CLI
+- [x] Tested vector search: "Who reviewed this PR about baseline tables?" → success!
+- **Key Learning:** End-to-end cloud RAG pipeline with real GitHub PR data works!
 
 #### Day 11-12: RAG Pipeline & Ingestion
 
