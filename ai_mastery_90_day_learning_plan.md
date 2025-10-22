@@ -1,11 +1,11 @@
 # 90-Day AI Mastery Learning Plan
 
-**Last Updated:** 2025-10-13
+**Last Updated:** 2025-10-15
 **Current Phase:** Phase 1, Week 2
-**Current Status:** Day 10 ✅ COMPLETED
-**Next Up:** Day 11 - RAG query pipeline with Claude
-**Overall Progress:** 10/90 days (11.1%)
-**Next Milestone:** Firestore-based RAG with multiple PRs by Day 14
+**Current Status:** Day 11 ✅ COMPLETED
+**Next Up:** Day 12 - Ingestion pipeline + duplicate detection
+**Overall Progress:** 11/90 days (12.2%)
+**Next Milestone:** Complete Firestore RAG pipeline by Day 14
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
 
@@ -148,12 +148,16 @@ pip install anthropic numpy scikit-learn
 
 #### Day 11-12: RAG Pipeline & Ingestion
 
-**Day 11: RAG Query Pipeline with Firestore**
-- [ ] Query Firestore for similar chunks (vector search)
-- [ ] Build context from retrieved chunks (like understanding_rag.py)
-- [ ] Send to Claude for generation
-- [ ] Test: End-to-end RAG with Firestore backend
-- **Key Learning:** Cloud-based RAG query patterns, latency considerations
+**Day 11: RAG Query Pipeline with Firestore** ✅ COMPLETED
+- [x] Built retrieve_chunks() with vector search from Firestore
+- [x] Added smart filtering: date_range, author, reviewer parameters
+- [x] Two-stage retrieval: Filter PRs by metadata → vector search within filtered results
+- [x] Built build_context() to format chunks with PR metadata
+- [x] Connected to Claude API with ask_claude() function
+- [x] Tested end-to-end: "What did BenWu review last 2 weeks?" → natural language answer with citations
+- [x] Supports three use cases: time-based, asset-based, person-based queries
+- **Key Learning:** Hybrid search (metadata filter + vector search) scales better than pure vector search
+- **File:** `understanding_firestore_rag.py`
 
 **Day 12: Ingestion Pipeline + Duplicate Detection**
 - [ ] Check if meeting already exists before processing

@@ -860,3 +860,131 @@ For vector search to work:
 2. Vector index created with matching dimensions
 3. Query vector same dimensions as stored vectors
 4. All documents in indexed collection must have the vector field
+
+## Day 11: RAG Query Pipeline with Firestore (2025-10-15)
+
+**Code:** [understanding_firestore_rag.py](./understanding_firestore_rag.py)
+
+### Connecting Firestore to Claude API
+
+Built complete RAG pipeline: Firestore vector search → context building → Claude generation → natural language answers with citations.
+
+### The Complete RAG Flow
+
+**5 Steps:**
+1. User asks question
+2. Filter PRs by metadata (date, author, reviewer) - optional
+3. Vector search within filtered results
+4. Build context with PR metadata
+5. Claude generates answer with citations
+
+**Key insight:** RAG = Retrieval + Generation. Chunks are context, not the final answer. Claude reads chunks and synthesizes natural language responses.
+
+### Two-Stage Retrieval (Hybrid Search)
+
+**Why hybrid search?**
+- Pure vector search: Search all 171 chunks → top 5
+- Hybrid search: Filter to 64 PRs by date → search ~130 chunks → top 5
+- **Better:** More focused, scales better, cheaper
+
+**The pattern:**
+1. **Stage 1 (coarse filter):** Metadata - date range, author, file
+2. **Stage 2 (fine filter):** Semantic similarity via vector search
+
+**Example:** "What baseline changes shipped last 2 weeks?"
+- Filter 75 PRs → 64 in date range (Stage 1)
+- Vector search "baseline changes" in those 64 (Stage 2)
+- Result: 5 most relevant recent baseline PRs
+
+### Three Use Cases Supported
+
+**1. Time-based:** "What was delivered last 2 weeks?"
+- Filter by `date_range`
+- Returns: Recent PRs matching query
+
+**2. Asset-based:** "What changed baseline tables?"
+- Pure semantic search (no filters)
+- Returns: PRs mentioning baseline/tables
+
+**3. Person-based:** "What did kwindau work on?"
+- Filter by `author` or `reviewer`
+- Returns: That person's relevant work
+
+### Context Building with Metadata
+
+**Challenge:** Chunks in Firestore don't have PR metadata (it's in parent document).
+
+**Solution:** Navigate up the path hierarchy:
+- Chunk path: `prs/pr_8170/chunks/chunk_1`
+- `chunk.reference.parent.parent` → PR document
+- Extract: PR number, title, author, merged_at
+
+**Why this matters:** Claude needs context to cite sources. "PR #8170" alone isn't useful. "PR #8170: bump beautifulsoup4, merged 2025-10-08" is actionable.
+
+### Prompt Engineering for RAG
+
+**Key instructions to Claude:**
+1. "Answer based ONLY on the sources" → Grounding (prevents hallucination)
+2. "Cite which sources you used" → Attribution (builds trust)
+3. "If not enough info, say so" → Honesty (admits limitations)
+
+**Result:** Claude gives focused answers with citations, or honestly says "I don't know."
+
+### Why This Scales
+
+**Token management:**
+- 5 chunks × 500 tokens = 2,500 tokens context
+- Well under Claude's limits
+- Better than sending all 64 PRs (would be ~25,000 tokens)
+
+**Cost efficiency:**
+- Pay per token sent to Claude
+- 5 focused chunks vs 20 random = 75% cost savings
+- Better answers with less context
+
+**Query efficiency:**
+- Metadata filters reduce search space before expensive vector operations
+- Can handle 1,000+ PRs with same approach
+
+### Firestore Limitations
+
+**Can't filter subcollections by parent fields directly**
+- Example: Can't do `chunks.where(parent.merged_at > date)`
+- Solution: Two-stage (get filtered parent IDs, then filter chunks)
+- Alternative: Denormalize (copy parent metadata into chunks)
+
+**Trade-off:** Extra query for parent filtering, but more flexible
+
+### Key Learnings
+
+**1. Hybrid search is standard in production RAG**
+- Coarse filter (metadata) → Fine filter (semantic)
+- Faster, cheaper, more accurate than pure vector search
+
+**2. Context formatting matters for citations**
+- Include source numbers, PR metadata
+- Clear separation between sources
+- Enables Claude to cite properly
+
+**3. Two-stage retrieval pattern**
+- Stage 1: Filter parents (PRs) by metadata
+- Stage 2: Vector search children (chunks) from filtered parents
+- Common pattern when parent/child relationship exists
+
+**4. RAG grounding prevents hallucination**
+- "Answer ONLY from sources" forces Claude to stick to your data
+- No making things up from training data
+- Honest "I don't know" when info missing
+
+### Production-Ready System
+
+**What works:**
+- 75 PRs, 171 chunks, sub-second queries
+- Natural language Q&A with citations
+- Flexible filtering (date, author, content)
+- Scales to 1,000+ PRs
+
+**What's next (Day 12):**
+- Ingestion pipeline (don't re-process existing PRs)
+- Duplicate detection
+- Incremental updates (add new PRs only)
