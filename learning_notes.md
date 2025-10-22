@@ -984,7 +984,23 @@ Built complete RAG pipeline: Firestore vector search → context building → Cl
 - Flexible filtering (date, author, content)
 - Scales to 1,000+ PRs
 
-**What's next (Day 12):**
-- Ingestion pipeline (don't re-process existing PRs)
-- Duplicate detection
-- Incremental updates (add new PRs only)
+## Day 12: Ingestion Pipeline + Duplicate Detection (2025-10-22)
+
+**Code:** [understanding_ingestion.py](./understanding_ingestion.py)
+
+### Key Learnings
+
+**1. Idempotent ingestion pattern**
+- Check `doc.exists` before processing (no errors thrown for missing docs)
+- Skip expensive operations (chunking, embedding) for duplicates
+- Production pattern: safe for daily cron jobs, retries, pipeline failures
+
+**2. Cost optimization**
+- Check existence = 1ms read
+- Generate embeddings = 100ms+ compute
+- Always check before expensive operations
+
+**3. PR number as natural key**
+- Unique identifier, never changes
+- Document ID: `pr_{number}` for fast lookups
+- Simple deduplication logic

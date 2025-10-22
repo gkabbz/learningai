@@ -1,10 +1,10 @@
 # 90-Day AI Mastery Learning Plan
 
-**Last Updated:** 2025-10-15
+**Last Updated:** 2025-10-22
 **Current Phase:** Phase 1, Week 2
-**Current Status:** Day 11 ✅ COMPLETED
-**Next Up:** Day 12 - Ingestion pipeline + duplicate detection
-**Overall Progress:** 11/90 days (12.2%)
+**Current Status:** Day 12 ✅ COMPLETED
+**Next Up:** Day 13 - Batch processing multiple PRs
+**Overall Progress:** 12/90 days (13.3%)
 **Next Milestone:** Complete Firestore RAG pipeline by Day 14
 
 **Goal:** Transform from novice AI user to expert AI practitioner with integrated workflows and custom tools.
@@ -159,12 +159,14 @@ pip install anthropic numpy scikit-learn
 - **Key Learning:** Hybrid search (metadata filter + vector search) scales better than pure vector search
 - **File:** `understanding_firestore_rag.py`
 
-**Day 12: Ingestion Pipeline + Duplicate Detection**
-- [ ] Check if meeting already exists before processing
-- [ ] Handle incremental ingestion (new meetings only)
-- [ ] Add metadata for filtering (date, participants, meeting_type)
-- [ ] Test: Process multiple transcripts, verify no duplicates
-- **Key Learning:** Production ingestion patterns, idempotency, metadata strategy
+**Day 12: Ingestion Pipeline + Duplicate Detection** ✅ COMPLETED
+- [x] Built `pr_exists()` function to check if PR already in Firestore
+- [x] Created `ingest_pr_with_duplicate_check()` for smart ingestion
+- [x] Tested with 5 PRs: detected duplicates vs new PRs correctly
+- [x] Verified idempotent ingestion (can run multiple times safely)
+- [x] Metadata already in place from Day 10 (PR number, author, merged_at, state)
+- **Key Learning:** Idempotent ingestion prevents wasted compute/cost. Check `.exists` property on document reference. Production pattern: check before processing expensive operations (chunking, embeddings).
+- **File:** `understanding_ingestion.py`
 
 #### Day 13-14: Multiple Transcripts + Testing
 
