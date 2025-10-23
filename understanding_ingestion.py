@@ -213,12 +213,12 @@ if __name__ == "__main__":
     pr_files = glob.glob(f'{pr_cache_dir}/pr_*.json')
 
     print(f"\nFound {len(pr_files)} PR files in cache")
-    print(f"Testing with first 5 PRs...\n")
+    print(f"Processing ALL PRs...\n")
 
-    # Test with just the first 5 PRs
+    # Process all PRs
     stats = {'skipped': 0, 'ingested': 0}
 
-    for pr_path in pr_files[:5]:
+    for pr_path in pr_files:
         # Load PR data from JSON
         with open(pr_path, 'r') as f:
             pr_data = json.load(f)
